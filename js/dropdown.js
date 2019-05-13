@@ -9,7 +9,7 @@
     svgContainer = d3
       .select('body')
       .append('svg')
-      .attr('width', 500)
+      .attr('width', 800)
       .attr('height', 500);
     // d3.csv is basically fetch but it can be be passed a csv file as a parameter
     d3.csv('./data/dataEveryYear.csv').then(data => makeScatterPlot(data));
@@ -18,33 +18,28 @@
   // make scatter plot with trend line
   function makeScatterPlot(csvData) {
     data = csvData; // assign data as global variable
+    console.log(data[0]);
 
-    // get arrays of fertility rate data and life Expectancy data
-    const fertility_rate_data = data.map(row =>
-      parseFloat(row['fertility_rate'])
+    // get arrays of population data and year data
+    const pop_mlns_data = data.map(
+      row => Math.round(parseFloat(row['pop_mlns']) * 100) / 100
     );
-    const life_expectancy_data = data.map(row =>
-      parseFloat(row['life_expectancy'])
-    );
+    const year_data = data.map(row => parseInt(row['time']));
 
     // find data limits
-    const axesLimits = findMinMax(fertility_rate_data, life_expectancy_data);
+    const axesLimits = findMinMax(year_data, pop_mlns_data);
 
     // draw axes and return scaling + mapping functions
-    const mapFunctions = drawAxes(
-      axesLimits,
-      'fertility_rate',
-      'life_expectancy'
-    );
+    const mapFunctions = drawAxes(axesLimits, 'time', 'pop_mlns');
 
     // creates dropdown of different years
-    makeDropdown();
+    // makeDropdown();
 
     // plot data as points and add tooltip functionality
     plotData(mapFunctions);
 
     // show and hide data points starting with 1960
-    filterPoints();
+    // filterPoints();
 
     // draw title and axes labels
     makeLabels();
@@ -57,20 +52,20 @@
       .attr('x', 100)
       .attr('y', 40)
       .style('font-size', '14pt')
-      .text('Countries by Life Expectancy and Fertility Rate');
+      .text('Population Change Over Time');
 
     svgContainer
       .append('text')
-      .attr('x', 130)
+      .attr('x', 375)
       .attr('y', 490)
       .style('font-size', '10pt')
-      .text('Fertility Rates (Avg Children per Woman)');
+      .text('Year');
 
     svgContainer
       .append('text')
-      .attr('transform', 'translate(15, 300)rotate(-90)')
+      .attr('transform', 'translate(10, 300)rotate(-90)')
       .style('font-size', '10pt')
-      .text('Life Expectancy (years)');
+      .text('Population in millions');
   }
 
   // create dropdown to filter data points
@@ -137,27 +132,27 @@
   // plot all the data points on the SVG
   // and add tooltip functionality
   function plotData(map) {
-    // data = data.filter(location => location.time === '1960');
+    data = data.filter(location => location.location === 'AUS');
     // get population data as array
-    const pop_data = data.map(row => +row['pop_mlns']);
-    const pop_limits = d3.extent(pop_data);
+    // const pop_data = data.map(row => +row['pop_mlns']);
+    // const pop_limits = d3.extent(pop_data);
 
-    // make size scaling function for population
-    const pop_map_func = d3
-      .scaleLinear()
-      .domain([pop_limits[0], pop_limits[1]])
-      .range([3, 20]);
+    // // make size scaling function for population
+    // const pop_map_func = d3
+    //   .scaleLinear()
+    //   .domain([pop_limits[0], pop_limits[1]])
+    //   .range([3, 20]);
 
     // mapping functions
     const xMap = map.x;
     const yMap = map.y;
 
     // make tooltip
-    const tooltip = d3
-      .select('body')
-      .append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0);
+    // const tooltip = d3
+    //   .select('body')
+    //   .append('div')
+    //   .attr('class', 'tooltip')
+    //   .style('opacity', 0);
 
     // append data to SVG and plot as points
     svgContainer
@@ -168,41 +163,41 @@
       .attr('class', 'circles')
       .attr('cx', xMap)
       .attr('cy', yMap)
-      .attr('r', d => pop_map_func(d['pop_mlns']))
-      .attr('fill', '#4286f4')
+      .attr('r', 5)
+      .attr('fill', '#4286f4');
 
-      // add tooltip functionality to points
-      .on('mouseover', d => {
-        tooltip
-          .transition()
-          .duration(200)
-          .style('opacity', 0.9);
+    // add tooltip functionality to points
+    //   .on('mouseover', d => {
+    //     tooltip
+    //       .transition()
+    //       .duration(200)
+    //       .style('opacity', 0.9);
 
-        tooltip
-          .html(
-            d.location +
-              '<br/>' +
-              'population: ' +
-              numberWithCommas(d['pop_mlns'] * 1000000) +
-              '<br/>' +
-              'year: ' +
-              d['time'] +
-              '<br/>' +
-              'life expectancy: ' +
-              d['life_expectancy'] +
-              '<br/>' +
-              'fertility_rate: ' +
-              d['fertility_rate']
-          )
-          .style('left', d3.event.pageX + 5 + 'px')
-          .style('top', d3.event.pageY + 10 + 'px');
-      })
-      .on('mouseout', d => {
-        tooltip
-          .transition()
-          .duration(500)
-          .style('opacity', 0);
-      });
+    //     tooltip
+    //       .html(
+    //         d.location +
+    //           '<br/>' +
+    //           'population: ' +
+    //           numberWithCommas(d['pop_mlns'] * 1000000) +
+    //           '<br/>' +
+    //           'year: ' +
+    //           d['time'] +
+    //           '<br/>' +
+    //           'life expectancy: ' +
+    //           d['life_expectancy'] +
+    //           '<br/>' +
+    //           'fertility_rate: ' +
+    //           d['fertility_rate']
+    //       )
+    //       .style('left', d3.event.pageX + 5 + 'px')
+    //       .style('top', d3.event.pageY + 10 + 'px');
+    //   })
+    //   .on('mouseout', d => {
+    //     tooltip
+    //       .transition()
+    //       .duration(500)
+    //       .style('opacity', 0);
+    //   });
   }
 
   // draw the axes and ticks
@@ -215,8 +210,8 @@
     // function to scale x value
     const xScale = d3
       .scaleLinear()
-      .domain([limits.xMin - 0.5, limits.xMax + 0.5]) // give domain buffer room
-      .range([50, 450]);
+      .domain([limits.xMin, limits.xMax]) // give domain buffer room
+      .range([50, 750]);
 
     // xMap returns a scaled x value from a row of data
     const xMap = function(d) {

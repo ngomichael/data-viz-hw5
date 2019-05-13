@@ -3,6 +3,7 @@
 (function() {
   let data = 'no data';
   let svgContainer = ''; // keep SVG reference in global scope
+  let selectedLocation = 'AUS';
 
   // load data and make scatter plot after window loads
   window.onload = function() {
@@ -11,6 +12,7 @@
       .append('svg')
       .attr('width', 800)
       .attr('height', 500);
+
     // d3.csv is basically fetch but it can be be passed a csv file as a parameter
     d3.csv('./data/dataEveryYear.csv').then(data => makeScatterPlot(data));
   };
@@ -18,7 +20,6 @@
   // make scatter plot with trend line
   function makeScatterPlot(csvData) {
     data = csvData; // assign data as global variable
-    console.log(data[0]);
 
     // get arrays of population data and year data
     const pop_mlns_data = data.map(
@@ -29,20 +30,20 @@
     // find data limits
     const axesLimits = findMinMax(year_data, pop_mlns_data);
 
+    // draw title and axes labels
+    makeLabels();
+
     // draw axes and return scaling + mapping functions
     const mapFunctions = drawAxes(axesLimits, 'time', 'pop_mlns');
 
     // creates dropdown of different years
-    // makeDropdown();
+    makeDropdown(mapFunctions);
 
     // plot data as points and add tooltip functionality
     plotData(mapFunctions);
 
     // show and hide data points starting with 1960
-    // filterPoints();
-
-    // draw title and axes labels
-    makeLabels();
+    filterPoints(mapFunctions);
   }
 
   // make title and axes labels
@@ -69,9 +70,11 @@
   }
 
   // create dropdown to filter data points
-  function makeDropdown() {
+  function makeDropdown(mapFunctions) {
     // get all unique years to include in dropdown
-    const dropdownYears = [...new Set(data.map(location => location.time))];
+    const dropdownCountries = [
+      ...new Set(data.map(location => location.location)),
+    ];
 
     // create select element and add an on change event handler to show and hide points
     const dropdown = d3
@@ -79,14 +82,15 @@
       .append('select')
       .attr('name', 'country-list')
       .on('change', function() {
-        var selectedYear = this.value;
-        filterPoints(selectedYear);
+        selectedLocation = this.value;
+        d3.selectAll('.line').remove();
+        filterPoints(mapFunctions);
       });
 
     // add dropdown options with the year as text
     dropdown
       .selectAll('option')
-      .data(dropdownYears)
+      .data(dropdownCountries)
       .enter()
       .append('option')
       .text(d => d)
@@ -109,7 +113,7 @@
     nextButton.addEventListener('click', () => {
       const select = document.getElementsByTagName('select')[0];
 
-      if (select.selectedIndex !== dropdownYears.length - 1) {
+      if (select.selectedIndex !== dropdownCountries.length - 1) {
         select.selectedIndex++;
         select.dispatchEvent(new Event('change'));
       }
@@ -117,32 +121,28 @@
   }
 
   // hides and shows data points based off of selected year
-  function filterPoints(selectedYear = '1960') {
+  function filterPoints(mapFunctions) {
     svgContainer
       .selectAll('.circles')
-      .filter(d => selectedYear !== d.time)
+      .filter(d => selectedLocation !== d.location)
       .attr('display', 'none');
 
     svgContainer
       .selectAll('.circles')
-      .filter(d => selectedYear === d.time)
+      .filter(d => {
+        return selectedLocation === d.location;
+      })
       .attr('display', 'inline');
+
+    plotData(mapFunctions);
   }
 
   // plot all the data points on the SVG
   // and add tooltip functionality
   function plotData(map) {
-    data = data.filter(location => location.location === 'AUS');
-
-    // get population data as array
-    // const pop_data = data.map(row => +row['pop_mlns']);
-    // const pop_limits = d3.extent(pop_data);
-
-    // // make size scaling function for population
-    // const pop_map_func = d3
-    //   .scaleLinear()
-    //   .domain([pop_limits[0], pop_limits[1]])
-    //   .range([3, 20]);
+    const filteredData = data.filter(
+      location => location.location === selectedLocation
+    );
 
     // mapping functions
     const xMap = map.x;
@@ -158,7 +158,7 @@
 
     svgContainer
       .append('path')
-      .datum(data)
+      .datum(filteredData)
       .attr('class', 'line')
       .attr('d', line);
 
@@ -172,7 +172,7 @@
     // append data to SVG and plot as points
     svgContainer
       .selectAll('.dot')
-      .data(data)
+      .data(filteredData)
       .enter()
       .append('circle')
       .attr('class', 'circles')

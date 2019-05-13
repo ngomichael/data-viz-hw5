@@ -133,6 +133,7 @@
   // and add tooltip functionality
   function plotData(map) {
     data = data.filter(location => location.location === 'AUS');
+
     // get population data as array
     // const pop_data = data.map(row => +row['pop_mlns']);
     // const pop_limits = d3.extent(pop_data);
@@ -146,6 +147,20 @@
     // mapping functions
     const xMap = map.x;
     const yMap = map.y;
+    const xScale = map.xScale;
+    const yScale = map.yScale;
+
+    const line = d3
+      .line()
+      .x(d => xScale(d.time))
+      .y(d => yScale(d.pop_mlns))
+      .curve(d3.curveMonotoneX);
+
+    svgContainer
+      .append('path')
+      .datum(data)
+      .attr('class', 'line')
+      .attr('d', line);
 
     // make tooltip
     // const tooltip = d3
@@ -163,7 +178,7 @@
       .attr('class', 'circles')
       .attr('cx', xMap)
       .attr('cy', yMap)
-      .attr('r', 5)
+      .attr('r', 3)
       .attr('fill', '#4286f4');
 
     // add tooltip functionality to points

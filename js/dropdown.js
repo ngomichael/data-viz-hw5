@@ -102,7 +102,7 @@
       .on('change', function() {
         selectedLocation = this.value;
         d3.selectAll('.line').remove();
-        replotLine(mapFunctions);
+        plotData(mapFunctions);
       });
 
     // add dropdown options with the year as text
@@ -136,11 +136,6 @@
         select.dispatchEvent(new Event('change'));
       }
     });
-  }
-
-  // hides and shows data points based off of selected year
-  function replotLine(mapFunctions) {
-    plotData(mapFunctions);
   }
 
   // plot all the data points on the SVG
@@ -188,10 +183,16 @@
 
   function makeScatterPlot() {
     svgScatterPlot.html('');
-    let timeData = data.map(row => row['fertility_rate']);
+    let fertilityRateData = data.map(row => row['fertility_rate']);
     let lifeExpectancyData = data.map(row => row['life_expectancy']);
 
-    let minMax = findMinMax(timeData, lifeExpectancyData);
+    let minMax = findMinMax(fertilityRateData, lifeExpectancyData);
+    minMax = {
+      xMin: parseFloat(minMax.xMin) - 0.1,
+      xMax: parseFloat(minMax.xMax) + 0.1,
+      yMin: minMax.yMin - 1,
+      yMax: minMax.yMax + 1,
+    };
 
     let funcs = drawAxes(
       minMax,
@@ -202,10 +203,10 @@
       { min: 50, max: 250 }
     );
 
-    plotLineGraph(funcs);
+    plotScatterPlot(funcs);
   }
 
-  function plotLineGraph(funcs) {
+  function plotScatterPlot(funcs) {
     svgScatterPlot
       .selectAll('.dot')
       .data(data)
@@ -214,7 +215,7 @@
       .attr('class', 'circles')
       .attr('cx', funcs.x)
       .attr('cy', funcs.y)
-      .attr('r', 3)
+      .attr('r', 1.5)
       .attr('fill', '#4286f4');
 
     svgScatterPlot
@@ -260,7 +261,7 @@
     const xAxis = d3.axisBottom().scale(xScale);
     svg
       .append('g')
-      .attr('transform', 'translate(0, 450)')
+      .attr('transform', 'translate(0, ' + rangeY.max + ')')
       .call(xAxis);
 
     // return y value from a row of data
@@ -271,7 +272,7 @@
     // function to scale y
     const yScale = d3
       .scaleLinear()
-      .domain([limits.yMax + 5, limits.yMin - 5]) // give domain buffer
+      .domain([limits.yMax, limits.yMin]) // give domain buffer
       .range([rangeY.min, rangeY.max]);
 
     // yMap returns a scaled y value from a row of data

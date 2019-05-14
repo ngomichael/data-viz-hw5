@@ -167,9 +167,12 @@
           .duration(200)
           .style('opacity', 0.9);
 
+        const yPos =
+          d3.event.pageY < 325 ? d3.event.pageY + 15 : d3.event.pageY - 325;
+
         tooltip
-          .style('left', d3.event.pageX + 5 + 'px')
-          .style('top', d3.event.pageY - 325 + 'px');
+          .style('left', d3.event.pageX + 10 + 'px')
+          .style('top', yPos + 'px');
 
         makeScatterPlot();
       })

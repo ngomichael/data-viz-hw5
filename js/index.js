@@ -229,7 +229,7 @@
       .attr('x', 130)
       .attr('y', 290)
       .style('font-size', '10pt')
-      .text('Year');
+      .text('Fertility Rate');
 
     svgScatterPlot
       .append('text')
@@ -242,7 +242,7 @@
       .append('text')
       .attr('transform', 'translate(15, 220)rotate(-90)')
       .style('font-size', '10pt')
-      .text('Life Expectancy (years)');
+      .text('Life Expectancy');
   }
 
   // draw the axes and ticks

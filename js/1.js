@@ -102,7 +102,7 @@
       .on('change', function() {
         selectedLocation = this.value;
         d3.selectAll('.line').remove();
-        replotLine(mapFunctions);
+        filterPoints(mapFunctions);
       });
 
     // add dropdown options with the year as text
@@ -138,11 +138,6 @@
     });
   }
 
-  // hides and shows data points based off of selected year
-  function replotLine(mapFunctions) {
-    plotData(mapFunctions);
-  }
-
   // plot all the data points on the SVG
   // and add tooltip functionality
   function plotData(map) {
@@ -157,8 +152,7 @@
     const line = d3
       .line()
       .x(d => xScale(d.time))
-      .y(d => yScale(d.pop_mlns))
-      .curve(d3.curveMonotoneX);
+      .y(d => yScale(d.pop_mlns));
 
     svgLineGraph
       .append('path')
@@ -229,7 +223,7 @@
       .attr('x', 50)
       .attr('y', 30)
       .style('font-size', '10pt')
-      .text('Life Expectancy vs Fertility Rate');
+      .text('Life Expectancy vs. Fertility Rate');
 
     svgScatterPlot
       .append('text')

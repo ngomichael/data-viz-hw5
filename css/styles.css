@@ -27,12 +27,13 @@ path {
 div.tooltip {
   position: absolute;
   text-align: center;
-  width: 350px;
+  width: 375px;
   height: 300px;
   padding: 2px;
   font: 12px sans-serif;
   background: white;
   border: 0px;
+  box-shadow: 0 4px 6px hsla(0, 0%, 0%, 0.2);
   border-radius: 8px;
   pointer-events: none;
 }

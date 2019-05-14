@@ -165,7 +165,7 @@
         tooltip
           .transition()
           .duration(200)
-          .style('opacity', 0.9);
+          .style('opacity', 1);
 
         const yPos =
           d3.event.pageY < 325 ? d3.event.pageY + 15 : d3.event.pageY - 325;

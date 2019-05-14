@@ -92,7 +92,7 @@
     // get all unique years to include in dropdown
     const dropdownCountries = [
       ...new Set(data.map(location => location.location)),
-    ];
+    ].sort();
 
     // create select element and add an on change event handler to show and hide points
     const dropdown = d3
@@ -161,7 +161,7 @@
       .attr('class', 'line')
       .attr('d', line)
       // add tooltip functionality to points
-      .on('mouseover', d => {
+      .on('mouseover', () => {
         tooltip
           .transition()
           .duration(200)
@@ -176,7 +176,7 @@
 
         makeScatterPlot();
       })
-      .on('mouseout', d => {
+      .on('mouseout', () => {
         tooltip
           .transition()
           .duration(500)

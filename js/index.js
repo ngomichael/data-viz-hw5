@@ -3,11 +3,11 @@
 (function() {
   let data = 'no data';
   let svgLineGraph = ''; // keep SVG reference in global scope
-  let selectedLocation = 'AUS';
+  let selectedLocation = 'AUS'; // have AUS as selected country on load
   let svgScatterPlot = '';
   let tooltip = '';
 
-  // load data and make scatter plot after window loads
+  // load data and make line graph after window loads
   window.onload = function() {
     svgLineGraph = d3
       .select('body')
@@ -31,7 +31,7 @@
     d3.csv('./data/dataEveryYear.csv').then(data => makeLineGraph(data));
   };
 
-  // make scatter plot with trend line
+  // make line graph
   function makeLineGraph(csvData) {
     data = csvData; // assign data as global variable
 
@@ -89,12 +89,12 @@
 
   // create dropdown to filter data points
   function makeDropdown(mapFunctions) {
-    // get all unique years to include in dropdown
+    // get all unique countries to include in dropdown
     const dropdownCountries = [
       ...new Set(data.map(location => location.location)),
-    ];
+    ].sort();
 
-    // create select element and add an on change event handler to show and hide points
+    // create select element and add an on change event handler to update shown country
     const dropdown = d3
       .select('#filter')
       .append('select')
@@ -102,10 +102,10 @@
       .on('change', function() {
         selectedLocation = this.value;
         d3.selectAll('.line').remove();
-        filterPoints(mapFunctions);
+        plotData(mapFunctions);
       });
 
-    // add dropdown options with the year as text
+    // add dropdown options with the country as text
     dropdown
       .selectAll('option')
       .data(dropdownCountries)
@@ -117,7 +117,7 @@
     const prevButton = document.getElementById('prev');
     const nextButton = document.getElementById('next');
 
-    // add click event listener to update dropdown value and filter data points by previous year
+    // add click event listener to update dropdown value and filter data points by previous country in list
     prevButton.addEventListener('click', () => {
       const select = document.getElementsByTagName('select')[0];
 
@@ -127,7 +127,7 @@
       }
     });
 
-    // add click event listener to update dropdown value and filter data points by next year
+    // add click event listener to update dropdown value and filter data points by next country in list
     nextButton.addEventListener('click', () => {
       const select = document.getElementsByTagName('select')[0];
 
@@ -138,7 +138,7 @@
     });
   }
 
-  // plot all the data points on the SVG
+  // draw lines on the SVG
   // and add tooltip functionality
   function plotData(map) {
     const filteredData = data.filter(
@@ -152,27 +152,32 @@
     const line = d3
       .line()
       .x(d => xScale(d.time))
-      .y(d => yScale(d.pop_mlns));
+      .y(d => yScale(d.pop_mlns))
+      .curve(d3.curveMonotoneX);
 
+    // draw line for chosen country and add tooltip functionality
     svgLineGraph
       .append('path')
       .datum(filteredData)
       .attr('class', 'line')
       .attr('d', line)
-      // add tooltip functionality to points
-      .on('mouseover', d => {
+      // add tooltip functionality to line
+      .on('mouseover', () => {
         tooltip
           .transition()
           .duration(200)
-          .style('opacity', 0.9);
+          .style('opacity', 1);
+
+        const yPos =
+          d3.event.pageY < 325 ? d3.event.pageY + 15 : d3.event.pageY - 325;
 
         tooltip
-          .style('left', d3.event.pageX + 5 + 'px')
-          .style('top', d3.event.pageY - 325 + 'px');
+          .style('left', d3.event.pageX + 10 + 'px')
+          .style('top', yPos + 'px');
 
         makeScatterPlot();
       })
-      .on('mouseout', d => {
+      .on('mouseout', () => {
         tooltip
           .transition()
           .duration(500)
@@ -180,14 +185,21 @@
       });
   }
 
+  // create scatter plot for tooltip
   function makeScatterPlot() {
     svgScatterPlot.html('');
-    let timeData = data.map(row => row['fertility_rate']);
-    let lifeExpectancyData = data.map(row => row['life_expectancy']);
+    const fertilityRateData = data.map(row => row['fertility_rate']);
+    const lifeExpectancyData = data.map(row => row['life_expectancy']);
 
-    let minMax = findMinMax(timeData, lifeExpectancyData);
+    let minMax = findMinMax(fertilityRateData, lifeExpectancyData);
+    minMax = {
+      xMin: parseFloat(minMax.xMin) - 0.1,
+      xMax: parseFloat(minMax.xMax) + 0.1,
+      yMin: minMax.yMin - 1,
+      yMax: minMax.yMax + 1,
+    };
 
-    let funcs = drawAxes(
+    const funcs = drawAxes(
       minMax,
       'fertility_rate',
       'life_expectancy',
@@ -196,10 +208,11 @@
       { min: 50, max: 250 }
     );
 
-    plotLineGraph(funcs);
+    plotScatterPlot(funcs);
   }
 
-  function plotLineGraph(funcs) {
+  // plots points on the svg in tooltip and creates labels
+  function plotScatterPlot(funcs) {
     svgScatterPlot
       .selectAll('.dot')
       .data(data)
@@ -208,7 +221,7 @@
       .attr('class', 'circles')
       .attr('cx', funcs.x)
       .attr('cy', funcs.y)
-      .attr('r', 3)
+      .attr('r', 1.5)
       .attr('fill', '#4286f4');
 
     svgScatterPlot
@@ -223,7 +236,7 @@
       .attr('x', 50)
       .attr('y', 30)
       .style('font-size', '10pt')
-      .text('Life Expectancy vs. Fertility Rate');
+      .text('Life Expectancy vs Fertility Rate');
 
     svgScatterPlot
       .append('text')
@@ -254,7 +267,7 @@
     const xAxis = d3.axisBottom().scale(xScale);
     svg
       .append('g')
-      .attr('transform', 'translate(0, 450)')
+      .attr('transform', 'translate(0, ' + rangeY.max + ')')
       .call(xAxis);
 
     // return y value from a row of data
@@ -265,7 +278,7 @@
     // function to scale y
     const yScale = d3
       .scaleLinear()
-      .domain([limits.yMax + 5, limits.yMin - 5]) // give domain buffer
+      .domain([limits.yMax, limits.yMin]) // give domain buffer
       .range([rangeY.min, rangeY.max]);
 
     // yMap returns a scaled y value from a row of data
